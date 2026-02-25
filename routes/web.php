@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectViewController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -32,6 +33,7 @@ Route::middleware('auth')->group(function () {
     // Task routes under projects
     Route::prefix('project/{projectId}')->name('project.')->group(function () {
         Route::resource('tasks', TaskController::class)->except(['show', 'create', 'edit']);
+        Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
     });
 });
 

@@ -33,31 +33,34 @@
                                     <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                                         {{ categoryName }}
                                     </h3>
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">
-                                        ({{ tasks.length }})
+                                    <button
+                                        @click.stop="openCategoryEditModal(categoryName)"
+                                        class="ml-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                        title="Edit category"
+                                    >
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                
+                                <!-- Progress Bar -->
+                                <div class="flex items-center gap-2 max-w-md">
+                                    <div class="w-64 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                        <div
+                                            class="bg-indigo-600 dark:bg-indigo-500 h-2 rounded-full transition-all duration-300"
+                                            :style="{ width: getCategoryProgress(categoryName) + '%' }"
+                                        ></div>
+                                    </div>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap min-w-[80px]">
+                                        {{ getCategoryProgress(categoryName) }}% ({{ getCategoryCompletedCount(categoryName) }}/{{ getCategoryTotalCount(categoryName) }})
                                     </span>
                                 </div>
                             </div>
                             
                             <!-- Tasks Table -->
                             <div class="overflow-x-auto">
-                                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                    <thead class="bg-gray-50 dark:bg-gray-900">
-                                        <tr>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                ID
-                                            </th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                Title
-                                            </th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                Tags
-                                            </th>
-                                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                Assignee
-                                            </th>
-                                        </tr>
-                                    </thead>
+                                <table class="min-w-full">
                                     <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                         <tr
                                             v-for="task in tasks"
@@ -65,15 +68,15 @@
                                             class="hover:bg-gray-50 dark:hover:bg-gray-900 cursor-pointer"
                                             @click="openEditModal(task)"
                                         >
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400" style="width: 5%">
                                                 #{{ task.id }}
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
+                                            <td class="px-6 py-4" style="width: 60%">
                                                 <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                                                     {{ task.title }}
                                                 </div>
                                             </td>
-                                            <td class="px-6 py-4">
+                                            <td class="px-6 py-4" style="width: 15%">
                                                 <div v-if="task.tags && task.tags.length > 0" class="flex flex-wrap gap-1">
                                                     <span
                                                         v-for="tag in task.tags"
@@ -86,25 +89,38 @@
                                                 </div>
                                                 <span v-else class="text-sm text-gray-400 dark:text-gray-500">—</span>
                                             </td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <div v-if="task.assignee" class="flex items-center">
+                                            <td class="px-6 py-4 whitespace-nowrap" style="width: 15%">
+                                                <span
+                                                    class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                                                    :class="getStatusClass(task.status)"
+                                                >
+                                                    {{ task.status }}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap" style="width: 5%">
+                                                <div v-if="task.assignee" class="flex items-center justify-center">
                                                     <img 
                                                         v-if="task.assignee.avatar" 
                                                         :src="task.assignee.avatar" 
                                                         :alt="task.assignee.name" 
+                                                        :title="task.assignee.name"
                                                         class="h-8 w-8 rounded-full"
                                                     >
                                                     <div 
                                                         v-else 
+                                                        :title="task.assignee.name"
                                                         class="h-8 w-8 rounded-full bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center text-sm font-medium text-indigo-600 dark:text-indigo-400"
                                                     >
                                                         {{ task.assignee.name.charAt(0).toUpperCase() }}
                                                     </div>
-                                                    <span class="ml-3 text-sm text-gray-900 dark:text-gray-100">
-                                                        {{ task.assignee.name }}
-                                                    </span>
                                                 </div>
-                                                <span v-else class="text-sm text-gray-400 dark:text-gray-500">Unassigned</span>
+                                                <div v-else class="flex items-center justify-center">
+                                                    <div class="h-8 w-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                        <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                        </svg>
+                                                    </div>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -137,6 +153,16 @@
             @close="closeModal"
             @saved="handleTaskSaved"
         />
+
+        <!-- Category Edit Modal -->
+        <CategoryEditModal
+            v-if="showCategoryModal"
+            :show="showCategoryModal"
+            :category="selectedCategory"
+            :project="project"
+            @close="closeCategoryModal"
+            @saved="handleCategorySaved"
+        />
     </AuthenticatedLayout>
 </template>
 
@@ -144,6 +170,7 @@
 import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import TaskModal from './TaskModal.vue';
+import CategoryEditModal from './CategoryEditModal.vue';
 
 const props = defineProps({
     project: Object,
@@ -155,6 +182,8 @@ const props = defineProps({
 
 const showModal = ref(false);
 const selectedTask = ref(null);
+const showCategoryModal = ref(false);
+const selectedCategory = ref(null);
 
 const openCreateModal = () => {
     selectedTask.value = null;
@@ -166,9 +195,22 @@ const openEditModal = (task) => {
     showModal.value = true;
 };
 
+const openCategoryEditModal = (categoryName) => {
+    const category = props.categories.find(c => c.name === categoryName);
+    if (category) {
+        selectedCategory.value = category;
+        showCategoryModal.value = true;
+    }
+};
+
 const closeModal = () => {
     showModal.value = false;
     selectedTask.value = null;
+};
+
+const closeCategoryModal = () => {
+    showCategoryModal.value = false;
+    selectedCategory.value = null;
 };
 
 const handleTaskSaved = () => {
@@ -177,9 +219,30 @@ const handleTaskSaved = () => {
     window.location.reload();
 };
 
+const handleCategorySaved = () => {
+    closeCategoryModal();
+    // Reload page to get updated data
+    window.location.reload();
+};
+
 const getCategoryColor = (categoryName) => {
     const category = props.categories.find(c => c.name === categoryName);
     return category?.color || null;
+};
+
+const getCategoryProgress = (categoryName) => {
+    const category = props.categories.find(c => c.name === categoryName);
+    return category?.completion_percentage || 0;
+};
+
+const getCategoryCompletedCount = (categoryName) => {
+    const category = props.categories.find(c => c.name === categoryName);
+    return category?.completed_tasks || 0;
+};
+
+const getCategoryTotalCount = (categoryName) => {
+    const category = props.categories.find(c => c.name === categoryName);
+    return category?.total_tasks || 0;
 };
 
 const getStatusClass = (status) => {

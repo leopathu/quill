@@ -20,19 +20,32 @@ class TaskController extends Controller
             ->with('owner:id,name,avatar')
             ->firstOrFail();
 
-        // Get tasks grouped by category
+        // Get tasks grouped by category (exclude completed tasks)
         $tasks = Task::where('project_id', $project->id)
+            ->where('status', '!=', 'Completed')
             ->with(['category', 'tags', 'owner:id,name,avatar', 'assignee:id,name,avatar'])
             ->get()
             ->groupBy(function($task) {
                 return $task->category ? $task->category->name : 'Uncategorized';
             });
 
-        // Get all categories for this project
+        // Get all categories for this project with task counts (exclude closed categories)
         $categories = Category::where('project_id', $project->id)
-            ->withCount('tasks')
+            ->where('status', 'open')
+            ->withCount([
+                'tasks as total_tasks',
+                'tasks as completed_tasks' => function ($query) {
+                    $query->where('status', 'Completed');
+                }
+            ])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function ($category) {
+                $category->completion_percentage = $category->total_tasks > 0 
+                    ? round(($category->completed_tasks / $category->total_tasks) * 100) 
+                    : 0;
+                return $category;
+            });
 
         // Get all tags for this project
         $tags = Tag::where('project_id', $project->id)

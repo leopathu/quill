@@ -13,6 +13,7 @@ class Category extends Model
         'project_id',
         'name',
         'color',
+        'status',
     ];
 
     public function project()
