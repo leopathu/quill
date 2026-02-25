@@ -66,6 +66,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Get tasks owned by the user.
+     */
+    public function ownedTasks()
+    {
+        return $this->hasMany(Task::class, 'owner_id');
+    }
+
+    /**
+     * Get tasks assigned to the user.
+     */
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assignee_id');
+    }
+
+    /**
      * Check if user is an admin.
      */
     public function isAdmin(): bool
