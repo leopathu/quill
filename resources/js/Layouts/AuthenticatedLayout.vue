@@ -47,46 +47,46 @@ const isActive = (item) => {
         <!-- Sidebar for desktop -->
         <div class="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
             <div class="flex flex-col flex-grow border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 overflow-y-auto">
-                <!-- Logo -->
-                <div class="flex flex-col px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                    <template v-if="project">
-                        <Link :href="route('projects.index')" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-3">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                            </svg>
-                            Back to Projects
-                        </Link>
-                        <div class="flex items-center space-x-3">
-                            <div v-if="project.logo" class="flex-shrink-0">
-                                <img :src="`/storage/${project.logo}`" :alt="project.name" class="h-10 w-10 rounded-lg object-cover">
-                            </div>
-                            <div v-else class="flex-shrink-0">
-                                <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                                    <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                                        {{ project.name.charAt(0).toUpperCase() }}
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h2 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ project.name }}</h2>
-                                <p class="text-xs text-gray-500 dark:text-gray-400">{{ project.project_id }}</p>
+                <!-- Organization Logo -->
+                <div class="flex items-center flex-shrink-0 px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                    <Link :href="route('dashboard')" class="flex items-center">
+                        <img
+                            v-if="page.props.auth.organization?.logo"
+                            :src="`/storage/${page.props.auth.organization.logo}`"
+                            :alt="page.props.auth.organization.name"
+                            class="h-9 w-9 object-cover rounded"
+                        />
+                        <ApplicationLogo v-else class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                        <span class="ml-3 text-xl font-semibold text-gray-800 dark:text-gray-200">
+                            {{ page.props.auth.organization?.name || 'Quill' }}
+                        </span>
+                    </Link>
+                </div>
+
+                <!-- Project Info (if in project context) -->
+                <div v-if="project" class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                    <Link :href="route('projects.index')" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-3">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                        Back to Projects
+                    </Link>
+                    <div class="flex items-center space-x-3">
+                        <div v-if="project.logo" class="flex-shrink-0">
+                            <img :src="`/storage/${project.logo}`" :alt="project.name" class="h-10 w-10 rounded-lg object-cover">
+                        </div>
+                        <div v-else class="flex-shrink-0">
+                            <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                                <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                    {{ project.name.charAt(0).toUpperCase() }}
+                                </span>
                             </div>
                         </div>
-                    </template>
-                    <template v-else>
-                        <Link :href="route('dashboard')" class="flex items-center">
-                            <img
-                                v-if="page.props.auth.organization?.logo"
-                                :src="`/storage/${page.props.auth.organization.logo}`"
-                                :alt="page.props.auth.organization.name"
-                                class="h-9 w-9 object-cover rounded"
-                            />
-                            <ApplicationLogo v-else class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                            <span class="ml-3 text-xl font-semibold text-gray-800 dark:text-gray-200">
-                                {{ page.props.auth.organization?.name || 'Quill' }}
-                            </span>
-                        </Link>
-                    </template>
+                        <div class="flex-1 min-w-0">
+                            <h2 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ project.name }}</h2>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ project.project_id }}</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Navigation -->
@@ -186,46 +186,46 @@ const isActive = (item) => {
                     </div>
 
                     <div class="flex flex-col flex-grow bg-white dark:bg-gray-800 overflow-y-auto">
-                        <!-- Logo -->
-                        <div class="flex flex-col px-6 py-5 border-b border-gray-200 dark:border-gray-700">
-                            <template v-if="project">
-                                <Link :href="route('projects.index')" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-3" @click="showingSidebar = false">
-                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                    Back to Projects
-                                </Link>
-                                <div class="flex items-center space-x-3">
-                                    <div v-if="project.logo" class="flex-shrink-0">
-                                        <img :src="`/storage/${project.logo}`" :alt="project.name" class="h-10 w-10 rounded-lg object-cover">
-                                    </div>
-                                    <div v-else class="flex-shrink-0">
-                                        <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                                            <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
-                                                {{ project.name.charAt(0).toUpperCase() }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <h2 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ project.name }}</h2>
-                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ project.project_id }}</p>
+                        <!-- Organization Logo -->
+                        <div class="flex items-center flex-shrink-0 px-6 py-5 border-b border-gray-200 dark:border-gray-700">
+                            <Link :href="route('dashboard')" class="flex items-center" @click="showingSidebar = false">
+                                <img
+                                    v-if="page.props.auth.organization?.logo"
+                                    :src="`/storage/${page.props.auth.organization.logo}`"
+                                    :alt="page.props.auth.organization.name"
+                                    class="h-9 w-9 object-cover rounded"
+                                />
+                                <ApplicationLogo v-else class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
+                                <span class="ml-3 text-xl font-semibold text-gray-800 dark:text-gray-200">
+                                    {{ page.props.auth.organization?.name || 'Quill' }}
+                                </span>
+                            </Link>
+                        </div>
+
+                        <!-- Project Info (if in project context) -->
+                        <div v-if="project" class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                            <Link :href="route('projects.index')" class="inline-flex items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-3" @click="showingSidebar = false">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                                </svg>
+                                Back to Projects
+                            </Link>
+                            <div class="flex items-center space-x-3">
+                                <div v-if="project.logo" class="flex-shrink-0">
+                                    <img :src="`/storage/${project.logo}`" :alt="project.name" class="h-10 w-10 rounded-lg object-cover">
+                                </div>
+                                <div v-else class="flex-shrink-0">
+                                    <div class="h-10 w-10 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                                        <span class="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                            {{ project.name.charAt(0).toUpperCase() }}
+                                        </span>
                                     </div>
                                 </div>
-                            </template>
-                            <template v-else>
-                                <Link :href="route('dashboard')" class="flex items-center" @click="showingSidebar = false">
-                                    <img
-                                        v-if="page.props.auth.organization?.logo"
-                                        :src="`/storage/${page.props.auth.organization.logo}`"
-                                        :alt="page.props.auth.organization.name"
-                                        class="h-9 w-9 object-cover rounded"
-                                    />
-                                    <ApplicationLogo v-else class="block h-9 w-auto fill-current text-gray-800 dark:text-gray-200" />
-                                    <span class="ml-3 text-xl font-semibold text-gray-800 dark:text-gray-200">
-                                        {{ page.props.auth.organization?.name || 'Quill' }}
-                                    </span>
-                                </Link>
-                            </template>
+                                <div class="flex-1 min-w-0">
+                                    <h2 class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ project.name }}</h2>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ project.project_id }}</p>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Navigation -->
