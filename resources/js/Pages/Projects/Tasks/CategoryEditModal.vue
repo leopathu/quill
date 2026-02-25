@@ -66,8 +66,14 @@
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 sm:text-sm"
                                     >
                                         <option value="open">Open</option>
-                                        <option value="closed">Closed</option>
+                                        <option value="closed" :disabled="hasOpenTasks">Closed</option>
                                     </select>
+                                    <p v-if="hasOpenTasks && form.status === 'open'" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+                                        <svg class="inline h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                                        </svg>
+                                        Cannot close category with {{ openTasksCount }} open task(s). Complete all tasks first.
+                                    </p>
                                     <p v-if="form.errors.status" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                         {{ form.errors.status }}
                                     </p>
@@ -100,7 +106,7 @@
 </template>
 
 <script setup>
-import { watch } from 'vue';
+import { watch, computed } from 'vue';
 import { useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
@@ -115,6 +121,14 @@ const form = useForm({
     name: '',
     status: 'open',
 });
+
+// Calculate open tasks count
+const openTasksCount = computed(() => {
+    if (!props.category) return 0;
+    return (props.category.total_tasks || 0) - (props.category.completed_tasks || 0);
+});
+
+const hasOpenTasks = computed(() => openTasksCount.value > 0);
 
 // Initialize form when category prop changes
 watch(() => props.category, (newCategory) => {

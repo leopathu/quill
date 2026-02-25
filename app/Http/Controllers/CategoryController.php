@@ -24,6 +24,19 @@ class CategoryController extends Controller
             'status' => 'required|in:open,closed',
         ]);
 
+        // Check if trying to close category with open tasks
+        if ($validated['status'] === 'closed' && $category->status === 'open') {
+            $openTasksCount = $category->tasks()
+                ->where('status', '!=', 'Completed')
+                ->count();
+            
+            if ($openTasksCount > 0) {
+                return redirect()->back()->withErrors([
+                    'status' => 'Cannot close category with ' . $openTasksCount . ' open task(s). Please complete or move all tasks first.'
+                ]);
+            }
+        }
+
         $category->update($validated);
 
         return redirect()->back()->with('success', 'Category updated successfully.');
