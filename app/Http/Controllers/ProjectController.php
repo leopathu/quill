@@ -68,14 +68,14 @@ class ProjectController extends Controller
      */
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
-        // Check if user has permission to manage projects
-        if (!auth()->user()->canManageProjects()) {
-            abort(403, 'You do not have permission to update projects.');
-        }
-
         // Ensure user can only update projects in their organization
         if ($project->organization_id !== auth()->user()->organization_id) {
             abort(403);
+        }
+
+        // Check if user is a manager of the project or has permission to manage all projects
+        if (!$project->isManager(auth()->user()) && !auth()->user()->canManageProjects()) {
+            abort(403, 'Only project managers can update project settings.');
         }
 
         $validated = $request->validated();

@@ -6,6 +6,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectViewController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\TeamController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -34,6 +35,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('project/{projectId}')->name('project.')->group(function () {
         Route::resource('tasks', TaskController::class)->except(['show', 'create', 'edit']);
         Route::put('categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+        
+        // Team management routes
+        Route::get('team', [TeamController::class, 'index'])->name('team.index');
+        Route::post('team', [TeamController::class, 'store'])->name('team.store');
+        Route::put('team/{user}', [TeamController::class, 'update'])->name('team.update');
+        Route::delete('team/{user}', [TeamController::class, 'destroy'])->name('team.destroy');
     });
 });
 

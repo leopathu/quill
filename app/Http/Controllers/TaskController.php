@@ -20,6 +20,11 @@ class TaskController extends Controller
             ->with('owner:id,name,avatar')
             ->firstOrFail();
 
+        // Check if user has access to the project
+        if (!$project->isMember(auth()->user())) {
+            abort(403, 'You are not a member of this project.');
+        }
+
         // Get tasks grouped by category (exclude completed tasks)
         $tasks = Task::where('project_id', $project->id)
             ->where('status', '!=', 'Completed')
@@ -72,6 +77,11 @@ class TaskController extends Controller
         $project = Project::where('project_id', $projectId)
             ->where('organization_id', auth()->user()->organization_id)
             ->firstOrFail();
+
+        // Check if user has access to the project
+        if (!$project->isMember(auth()->user())) {
+            abort(403, 'You are not a member of this project.');
+        }
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -155,6 +165,11 @@ class TaskController extends Controller
         $project = Project::where('project_id', $projectId)
             ->where('organization_id', auth()->user()->organization_id)
             ->firstOrFail();
+
+        // Check if user has access to the project
+        if (!$project->isMember(auth()->user())) {
+            abort(403, 'You are not a member of this project.');
+        }
 
         // Ensure task belongs to this project
         if ($task->project_id !== $project->id) {
@@ -244,6 +259,11 @@ class TaskController extends Controller
         $project = Project::where('project_id', $projectId)
             ->where('organization_id', auth()->user()->organization_id)
             ->firstOrFail();
+
+        // Check if user has access to the project
+        if (!$project->isMember(auth()->user())) {
+            abort(403, 'You are not a member of this project.');
+        }
 
         // Ensure task belongs to this project
         if ($task->project_id !== $project->id) {

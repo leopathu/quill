@@ -82,6 +82,16 @@ class User extends Authenticatable
     }
 
     /**
+     * Get projects where the user is a team member.
+     */
+    public function projects()
+    {
+        return $this->belongsToMany(Project::class, 'project_user')
+            ->withPivot('role')
+            ->withTimestamps();
+    }
+
+    /**
      * Check if user is an admin.
      */
     public function isAdmin(): bool
