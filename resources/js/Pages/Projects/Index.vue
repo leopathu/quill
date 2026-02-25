@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, useForm, usePage, Link } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 
 const props = defineProps({
@@ -185,7 +185,12 @@ watch(() => form.name, (newName) => {
                                                 </svg>
                                             </div>
                                             <div>
-                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ project.name }}</div>
+                                                <Link 
+                                                    :href="route('project.view', project.project_id)"
+                                                    class="text-sm font-medium text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                                >
+                                                    {{ project.name }}
+                                                </Link>
                                                 <div v-if="project.description" class="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">{{ project.description }}</div>
                                             </div>
                                         </div>

@@ -3,6 +3,7 @@
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectViewController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/organization/settings', [OrganizationController::class, 'update'])->name('organization.update');
 
     Route::resource('projects', ProjectController::class)->except(['show', 'create', 'edit']);
+    Route::get('/project/{projectId}', [ProjectViewController::class, 'show'])->name('project.view');
     Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
 });
 
