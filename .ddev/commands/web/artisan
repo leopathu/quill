@@ -1,0 +1,7 @@
+#!/bin/bash
+
+## Description: Run Laravel Artisan commands
+## Usage: artisan [flags] [args]
+## Example: ddev artisan migrate
+
+php artisan "$@"

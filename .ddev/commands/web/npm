@@ -1,0 +1,7 @@
+#!/bin/bash
+
+## Description: Run npm commands
+## Usage: npm [flags] [args]
+## Example: ddev npm install
+
+npm "$@"
