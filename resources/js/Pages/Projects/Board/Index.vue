@@ -12,6 +12,7 @@
             <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
                 <!-- Board Columns -->
                 <div class="flex gap-4 overflow-x-auto pb-4">
+
                     <div
                         v-for="status in statusGroups"
                         :key="status"
@@ -33,6 +34,16 @@
                                     {{ tasksByStatus[status]?.length || 0 }}
                                 </span>
                             </div>
+                            <!-- Add Task button for Todo column -->
+                            <button
+                                v-if="status === 'Todo'"
+                                @click="openNewTaskModal"
+                                class="mt-2 w-full flex items-center justify-center gap-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 transition-colors shadow focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2"
+                                type="button"
+                            >
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                                Add Task
+                            </button>
                         </div>
 
                         <!-- Task Cards -->
@@ -160,8 +171,15 @@ const onDragStart = (event, task) => {
     event.dataTransfer.effectAllowed = 'move';
 };
 
+
 const openTaskModal = (task) => {
     selectedTask.value = task;
+    showTaskModal.value = true;
+};
+
+const openNewTaskModal = () => {
+    // Open modal in create mode, status pre-set to 'Todo'
+    selectedTask.value = null;
     showTaskModal.value = true;
 };
 
@@ -196,5 +214,49 @@ const onDrop = (event, newStatus) => {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    line-clamp: 2;
+}
+
+/* Stylish scrollbars for board columns (horizontal and vertical) */
+.flex.gap-4.overflow-x-auto.pb-4 {
+    scrollbar-width: thin;
+    scrollbar-color: #6366f1 #e5e7eb; /* indigo-500 on gray-100 */
+}
+.flex.gap-4.overflow-x-auto.pb-4::-webkit-scrollbar {
+    height: 10px;
+    width: 10px;
+    background: #e5e7eb;
+    border-radius: 8px;
+}
+.flex.gap-4.overflow-x-auto.pb-4::-webkit-scrollbar-thumb {
+    background: #6366f1;
+    border-radius: 8px;
+}
+.flex.gap-4.overflow-x-auto.pb-4::-webkit-scrollbar-thumb:hover {
+    background: #4f46e5;
+}
+.flex.gap-4.overflow-x-auto.pb-4::-webkit-scrollbar-corner {
+    background: #e5e7eb;
+}
+
+/* Vertical scroll for each column if needed */
+.min-h-\[200px\] {
+    scrollbar-width: thin;
+    scrollbar-color: #6366f1 #f3f4f6;
+}
+.min-h-\[200px\]::-webkit-scrollbar {
+    width: 8px;
+    background: #f3f4f6;
+    border-radius: 8px;
+}
+.min-h-\[200px\]::-webkit-scrollbar-thumb {
+    background: #6366f1;
+    border-radius: 8px;
+}
+.min-h-\[200px\]::-webkit-scrollbar-thumb:hover {
+    background: #4f46e5;
+}
+.min-h-\[200px\]::-webkit-scrollbar-corner {
+    background: #f3f4f6;
 }
 </style>
