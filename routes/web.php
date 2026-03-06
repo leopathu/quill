@@ -11,6 +11,7 @@ use App\Http\Controllers\BoardController;
 use App\Http\Controllers\TaskCommentController;
 use App\Http\Controllers\TaskTimeLogController;
 use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -56,6 +57,13 @@ Route::middleware('auth')->group(function () {
 
         // Project time report
         Route::get('reports', [ReportsController::class, 'project'])->name('reports.project');
+
+        // Document routes
+        Route::get('documents', [DocumentController::class, 'index'])->name('documents.index');
+        Route::post('documents', [DocumentController::class, 'store'])->name('documents.store');
+        Route::get('documents/{document}', [DocumentController::class, 'show'])->name('documents.show');
+        Route::put('documents/{document}', [DocumentController::class, 'update'])->name('documents.update');
+        Route::delete('documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
         // Team management routes
         Route::get('team', [TeamController::class, 'index'])->name('team.index');
