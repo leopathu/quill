@@ -128,8 +128,9 @@
             :categories="categories"
             :tags="tags"
             :users="users"
-            @close="showTaskModal = false"
-            @saved="showTaskModal = false"
+            default-status="Todo"
+            @close="showTaskModal = false; selectedTask = null;"
+            @saved="showTaskModal = false; selectedTask = null;"
         />
     </AuthenticatedLayout>
 </template>
@@ -137,7 +138,7 @@
 <script setup>
 import { ref } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import TaskModal from '../Tasks/TaskModal.vue';
+import TaskModal from '@/Components/Tasks/TaskModal.vue';
 import { router } from '@inertiajs/vue3';
 
 const props = defineProps({

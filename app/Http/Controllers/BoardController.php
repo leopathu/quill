@@ -48,6 +48,7 @@ class BoardController extends Controller
                     'status' => $task->status,
                     'estimation' => $task->estimation,
                     'attachments' => $task->attachments,
+                    'assignee_id' => $task->assignee_id,
                     'category' => $task->category ? [
                         'id' => $task->category->id,
                         'name' => $task->category->name,

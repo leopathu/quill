@@ -169,7 +169,7 @@
 <script setup>
 import { ref, computed } from 'vue';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import TaskModal from './TaskModal.vue';
+import TaskModal from '@/Components/Tasks/TaskModal.vue';
 import CategoryEditModal from './CategoryEditModal.vue';
 
 const props = defineProps({
