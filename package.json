@@ -25,6 +25,8 @@
         "@ckeditor/ckeditor5-vue": "^7.3.1",
         "@inertiajs/vue3": "^2.3.15",
         "@vitejs/plugin-vue": "^6.0.4",
-        "vue": "^3.5.29"
+        "chart.js": "^4.5.1",
+        "vue": "^3.5.29",
+        "vue-chartjs": "^5.3.3"
     }
 }
