@@ -39,7 +39,7 @@
                             <div class="flex max-h-[calc(100vh-220px)] overflow-hidden">
 
                                 <!-- Left column: 70% — Title + Description + Comments -->
-                                <div class="flex-[7] min-w-0 overflow-y-auto px-6 py-5 space-y-4 border-r border-gray-200 dark:border-gray-700">
+                                <div class="flex-[7] min-w-0 overflow-y-auto px-6 py-5 space-y-4 border-r border-gray-200 dark:border-gray-700 scrollbar-thin">
                                     <!-- Title -->
                                     <div>
                                         <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -647,5 +647,33 @@ const close = () => emit('close');
 .dark .ck-editor__editable {
     background-color: rgb(55 65 81);
     color: rgb(243 244 246);
+}
+
+/* Thin transparent scrollbar for the left column */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+.scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(156, 163, 175, 0.4);
+    border-radius: 9999px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(156, 163, 175, 0.7);
+}
+.dark .scrollbar-thin {
+    scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+}
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(75, 85, 99, 0.8);
 }
 </style>
