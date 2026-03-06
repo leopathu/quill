@@ -9,6 +9,8 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\TaskCommentController;
+use App\Http\Controllers\TaskTimeLogController;
+use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -31,6 +33,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('projects', ProjectController::class)->except(['show', 'create', 'edit']);
     Route::get('/project/{projectId}', [ProjectViewController::class, 'show'])->name('project.view');
+    Route::get('/reports', [ReportsController::class, 'global'])->name('reports.global');
     Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
     
     // Task routes under projects
@@ -45,6 +48,14 @@ Route::middleware('auth')->group(function () {
         // Task comment routes
         Route::post('tasks/{task}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
         Route::delete('tasks/{task}/comments/{comment}', [TaskCommentController::class, 'destroy'])->name('tasks.comments.destroy');
+
+        // Task time log routes
+        Route::post('tasks/{task}/time-logs', [TaskTimeLogController::class, 'store'])->name('tasks.time-logs.store');
+        Route::put('tasks/{task}/time-logs/{timeLog}', [TaskTimeLogController::class, 'update'])->name('tasks.time-logs.update');
+        Route::delete('tasks/{task}/time-logs/{timeLog}', [TaskTimeLogController::class, 'destroy'])->name('tasks.time-logs.destroy');
+
+        // Project time report
+        Route::get('reports', [ReportsController::class, 'project'])->name('reports.project');
 
         // Team management routes
         Route::get('team', [TeamController::class, 'index'])->name('team.index');

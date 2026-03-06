@@ -28,7 +28,7 @@ class TaskController extends Controller
         // Get tasks grouped by category (exclude completed tasks)
         $tasks = Task::where('project_id', $project->id)
             ->where('status', '!=', 'Completed')
-            ->with(['category', 'tags', 'owner:id,name,avatar', 'assignee:id,name,avatar', 'comments.user', 'comments.replies.user', 'comments.replies.replies.user'])
+            ->with(['category', 'tags', 'owner:id,name,avatar', 'assignee:id,name,avatar', 'comments.user', 'comments.replies.user', 'comments.replies.replies.user', 'timeLogs.user'])
             ->get()
             ->groupBy(function($task) {
                 return $task->category ? $task->category->name : 'Uncategorized';

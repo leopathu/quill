@@ -59,4 +59,9 @@ class Task extends Model
             ->with('user', 'replies')
             ->latest();
     }
+
+    public function timeLogs()
+    {
+        return $this->hasMany(TaskTimeLog::class)->with('user')->latest('date');
+    }
 }

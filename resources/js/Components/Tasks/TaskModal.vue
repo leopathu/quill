@@ -74,6 +74,15 @@
                                         </p>
                                     </div>
 
+                                    <!-- Time Tracking (only in edit mode) -->
+                                    <div v-if="task">
+                                        <TimeTracker
+                                            :task="task"
+                                            :project="project"
+                                            :auth-user="authUser"
+                                        />
+                                    </div>
+
                                     <!-- Comments (only in edit mode) -->
                                     <div v-if="task">
                                         <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
@@ -400,6 +409,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { Ckeditor } from '@ckeditor/ckeditor5-vue';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import CommentItem from '@/Components/Tasks/CommentItem.vue';
+import TimeTracker from '@/Components/Tasks/TimeTracker.vue';
 
 const props = defineProps({
     show: Boolean,
