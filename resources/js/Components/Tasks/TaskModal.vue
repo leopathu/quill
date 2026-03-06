@@ -38,7 +38,7 @@
                             <!-- Body: two-column 70/30 layout -->
                             <div class="flex max-h-[calc(100vh-220px)] overflow-hidden">
 
-                                <!-- Left column: 70% — Title + Description -->
+                                <!-- Left column: 70% — Title + Description + Comments -->
                                 <div class="flex-[7] min-w-0 overflow-y-auto px-6 py-5 space-y-4 border-r border-gray-200 dark:border-gray-700">
                                     <!-- Title -->
                                     <div>
@@ -72,6 +72,76 @@
                                         <p v-if="errors.description" class="mt-1 text-sm text-red-600 dark:text-red-400">
                                             {{ errors.description }}
                                         </p>
+                                    </div>
+
+                                    <!-- Comments (only in edit mode) -->
+                                    <div v-if="task">
+                                        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                            <h4 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                                                Comments
+                                                <span v-if="localComments.length" class="ml-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+                                                    ({{ localComments.length }})
+                                                </span>
+                                            </h4>
+
+                                            <!-- Add comment form -->
+                                            <div class="flex gap-3 mb-4">
+                                                <div class="flex-shrink-0">
+                                                    <img
+                                                        v-if="authUser?.avatar"
+                                                        :src="authUser.avatar"
+                                                        :alt="authUser.name"
+                                                        class="h-8 w-8 rounded-full object-cover"
+                                                    />
+                                                    <div
+                                                        v-else
+                                                        class="h-8 w-8 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-semibold"
+                                                    >
+                                                        {{ authUser?.name?.charAt(0).toUpperCase() }}
+                                                    </div>
+                                                </div>
+                                                <div class="flex-1">
+                                                    <textarea
+                                                        v-model="newComment"
+                                                        rows="2"
+                                                        placeholder="Write a comment..."
+                                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 text-sm resize-none"
+                                                        @keydown.ctrl.enter.prevent="submitComment(null)"
+                                                    ></textarea>
+                                                    <div class="mt-1.5 flex items-center justify-between">
+                                                        <span class="text-xs text-gray-400 dark:text-gray-500">Ctrl+Enter to submit</span>
+                                                        <button
+                                                            type="button"
+                                                            :disabled="!newComment.trim() || commentProcessing"
+                                                            @click="submitComment(null)"
+                                                            class="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        >
+                                                            {{ commentProcessing ? 'Posting...' : 'Comment' }}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Comments list -->
+                                            <div class="space-y-4">
+                                                <div
+                                                    v-for="comment in localComments"
+                                                    :key="comment.id"
+                                                >
+                                                    <CommentItem
+                                                        :comment="comment"
+                                                        :task="task"
+                                                        :project="project"
+                                                        :auth-user="authUser"
+                                                        @reply-posted="onCommentAction"
+                                                        @deleted="onCommentAction"
+                                                    />
+                                                </div>
+                                                <p v-if="localComments.length === 0" class="text-sm text-gray-400 dark:text-gray-500 italic">
+                                                    No comments yet.
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -325,10 +395,11 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { ref, reactive, watch, computed } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 import { Ckeditor } from '@ckeditor/ckeditor5-vue';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+import CommentItem from '@/Components/Tasks/CommentItem.vue';
 
 const props = defineProps({
     show: Boolean,
@@ -345,6 +416,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'saved']);
 
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user);
+
 const editor = ClassicEditor;
 const editorConfig = {
     toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'undo', 'redo'],
@@ -354,6 +428,9 @@ const fileInput = ref(null);
 const tagsInput = ref('');
 const processing = ref(false);
 const errors = ref({});
+const newComment = ref('');
+const commentProcessing = ref(false);
+const localComments = ref([]);
 
 // Plain reactive form state — no Inertia proxy
 const form = reactive({
@@ -411,11 +488,17 @@ const resetForm = (task) => {
 
 // Re-populate whenever the modal opens or the task changes
 watch(() => props.show, (val) => {
-    if (val) resetForm(props.task);
+    if (val) {
+        resetForm(props.task);
+        localComments.value = props.task?.comments ? [...props.task.comments] : [];
+    }
 }, { immediate: true });
 
 watch(() => props.task, (val) => {
-    if (props.show) resetForm(val);
+    if (props.show) {
+        resetForm(val);
+        localComments.value = val?.comments ? [...val.comments] : [];
+    }
 });
 
 const addTag = () => {
@@ -503,6 +586,54 @@ const deleteTask = () => {
         preserveScroll: true,
         onSuccess: () => emit('saved'),
     });
+};
+
+const submitComment = (parentId) => {
+    if (!newComment.value.trim()) return;
+    commentProcessing.value = true;
+
+    // Optimistically add comment to local list immediately
+    const optimistic = {
+        id: Date.now(), // temp id
+        body: newComment.value.trim(),
+        parent_id: parentId ?? null,
+        created_at: new Date().toISOString(),
+        user: { id: authUser.value?.id, name: authUser.value?.name, avatar: authUser.value?.avatar },
+        replies: [],
+        _optimistic: true,
+    };
+
+    if (!parentId) {
+        localComments.value.unshift(optimistic);
+    } else {
+        // inject into the right parent's replies
+        const addToParent = (list) => {
+            for (const c of list) {
+                if (c.id === parentId) { c.replies = c.replies ?? []; c.replies.push(optimistic); return true; }
+                if (c.replies?.length && addToParent(c.replies)) return true;
+            }
+            return false;
+        };
+        addToParent(localComments.value);
+    }
+
+    const body = newComment.value.trim();
+    newComment.value = '';
+
+    router.post(
+        route('project.tasks.comments.store', { projectId: props.project.project_id, task: props.task.id }),
+        { body, parent_id: parentId ?? null },
+        {
+            preserveScroll: true,
+            onFinish: () => { commentProcessing.value = false; },
+        }
+    );
+};
+
+const onCommentAction = (deletedId) => {
+    if (deletedId) {
+        localComments.value = localComments.value.filter(c => c.id !== deletedId);
+    }
 };
 
 const close = () => emit('close');

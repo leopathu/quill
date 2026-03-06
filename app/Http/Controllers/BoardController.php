@@ -32,7 +32,7 @@ class BoardController extends Controller
 
         // Get all tasks for this project grouped by status
         $tasks = Task::where('project_id', $project->id)
-            ->with(['category:id,name,color', 'assignee:id,name,avatar', 'owner:id,name,avatar', 'tags:id,name,color'])
+            ->with(['category:id,name,color', 'assignee:id,name,avatar', 'owner:id,name,avatar', 'tags:id,name,color', 'comments.user', 'comments.replies.user', 'comments.replies.replies.user'])
             ->get()
             ->groupBy('status');
 
@@ -69,6 +69,7 @@ class BoardController extends Controller
                         'name' => $tag->name,
                         'color' => $tag->color,
                     ]),
+                    'comments' => $task->comments,
                 ];
             })->values();
         }

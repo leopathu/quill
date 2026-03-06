@@ -51,4 +51,12 @@ class Task extends Model
     {
         return $this->belongsToMany(Tag::class, 'task_tag')->withTimestamps();
     }
+
+    public function comments()
+    {
+        return $this->hasMany(TaskComment::class)
+            ->whereNull('parent_id')
+            ->with('user', 'replies')
+            ->latest();
+    }
 }
