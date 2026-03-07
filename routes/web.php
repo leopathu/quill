@@ -31,6 +31,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/organization/settings', [OrganizationController::class, 'edit'])->name('organization.edit');
     Route::post('/organization/settings', [OrganizationController::class, 'update'])->name('organization.update');
+    Route::post('/organization/settings/smtp', [OrganizationController::class, 'updateSmtp'])->name('organization.smtp.update');
 
     Route::resource('projects', ProjectController::class)->except(['show', 'create', 'edit']);
     Route::get('/project/{projectId}', [ProjectViewController::class, 'show'])->name('project.view');
