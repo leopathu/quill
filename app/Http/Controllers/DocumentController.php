@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\ProjectDocument;
 use App\Models\Tag;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -119,6 +120,10 @@ class DocumentController extends Controller
         if (!empty($validated['tag_ids'])) {
             $doc->tags()->sync($validated['tag_ids']);
         }
+
+        // Email notification
+        $org = auth()->user()->organization;
+        (new EmailNotificationService())->documentCreated($doc, $project, $org);
 
         return redirect()->route('project.documents.show', [
             'projectId' => $projectId,

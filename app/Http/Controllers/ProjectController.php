@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Project;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -59,6 +60,13 @@ class ProjectController extends Controller
         }
 
         Project::create($validated);
+
+        // Email notification
+        $org = auth()->user()->organization;
+        $project = Project::where('organization_id', $org->id)->latest()->first();
+        if ($project) {
+            (new EmailNotificationService())->projectCreated($project, $org);
+        }
 
         return back()->with('success', 'Project created successfully.');
     }

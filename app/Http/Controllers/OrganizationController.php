@@ -27,13 +27,13 @@ class OrganizationController extends Controller
                 'logo'        => $organization->logo,
             ],
             'smtp' => [
-                'host'       => $settings['smtp_host'] ?? '',
-                'port'       => $settings['smtp_port'] ?? '587',
-                'username'   => $settings['smtp_username'] ?? '',
-                'password'   => $settings['smtp_password'] ?? '',
-                'encryption' => $settings['smtp_encryption'] ?? 'tls',
-                'from_address' => $settings['smtp_from_address'] ?? '',
-                'from_name'  => $settings['smtp_from_name'] ?? '',
+                'host'           => $settings['smtp_host'] ?? '',
+                'port'           => $settings['smtp_port'] ?? '587',
+                'username'       => $settings['smtp_username'] ?? '',
+                'password_saved' => !empty($settings['smtp_password']),
+                'encryption'     => $settings['smtp_encryption'] ?? 'tls',
+                'from_address'   => $settings['smtp_from_address'] ?? '',
+                'from_name'      => $settings['smtp_from_name'] ?? '',
             ],
         ]);
     }

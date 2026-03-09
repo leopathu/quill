@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Category;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
@@ -157,6 +158,10 @@ class TaskController extends Controller
             $task->tags()->sync($tagIds);
         }
 
+        // Email notification
+        $org = auth()->user()->organization;
+        (new EmailNotificationService())->taskAssigned($task->fresh(['assignee', 'owner']), $project, $org);
+
         return redirect()->back()->with('success', 'Task created successfully.');
     }
 
@@ -175,6 +180,9 @@ class TaskController extends Controller
         if ($task->project_id !== $project->id) {
             abort(403);
         }
+
+        $previousAssigneeId = $task->assignee_id;
+        $previousStatus     = $task->status;
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -249,6 +257,15 @@ class TaskController extends Controller
                 }
             }
             $task->tags()->sync($tagIds);
+        }
+
+        // Email notifications
+        $task->refresh()->load(['assignee', 'owner']);
+        $org = auth()->user()->organization;
+        $notifier = new EmailNotificationService();
+        $notifier->taskReassigned($task, $project, $org, $previousAssigneeId);
+        if ($task->status !== $previousStatus) {
+            $notifier->taskStatusChanged($task, $project, $org, $previousStatus, $task->status);
         }
 
         return redirect()->back()->with('success', 'Task updated successfully.');

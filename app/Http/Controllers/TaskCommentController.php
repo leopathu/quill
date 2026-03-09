@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskComment;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 
 class TaskCommentController extends Controller
@@ -28,12 +29,18 @@ class TaskCommentController extends Controller
             'parent_id' => 'nullable|exists:task_comments,id',
         ]);
 
-        TaskComment::create([
+        $comment = TaskComment::create([
             'task_id'   => $task->id,
             'user_id'   => auth()->id(),
             'parent_id' => $validated['parent_id'] ?? null,
             'body'      => $validated['body'],
         ]);
+
+        // Email notification
+        $task->load(['owner', 'assignee']);
+        $comment->load('parent.user');
+        $org = auth()->user()->organization;
+        (new EmailNotificationService())->commentAdded($comment, $task, $project, $org);
 
         return redirect()->back();
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -101,6 +102,10 @@ class TeamController extends Controller
         // Add user to team
         $project->team()->attach($validated['user_id'], ['role' => $validated['role']]);
 
+        // Email notification
+        $org = $request->user()->organization;
+        (new EmailNotificationService())->teamMemberAdded($userToAdd, $project, $org, $validated['role']);
+
         return redirect()->back()->with('success', 'Team member added successfully.');
     }
 
@@ -159,6 +164,10 @@ class TeamController extends Controller
 
         // Remove user from team
         $project->team()->detach($user->id);
+
+        // Email notification
+        $org = $request->user()->organization;
+        (new EmailNotificationService())->teamMemberRemoved($user, $project, $org);
 
         return redirect()->back()->with('success', 'Team member removed successfully.');
     }

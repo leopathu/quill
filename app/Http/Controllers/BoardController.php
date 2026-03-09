@@ -7,6 +7,7 @@ use App\Models\Task;
 use App\Models\Category;
 use App\Models\Tag;
 use App\Models\User;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -122,7 +123,13 @@ class BoardController extends Controller
             'status' => 'required|in:Todo,Analysis,Ready,Progress,Review,QA,Completed',
         ]);
 
+        $previousStatus = $task->status;
         $task->update(['status' => $validated['status']]);
+
+        // Email notification
+        $task->load(['assignee', 'owner']);
+        $org = $request->user()->organization;
+        (new EmailNotificationService())->taskStatusChanged($task, $project, $org, $previousStatus, $validated['status']);
 
         return back()->with('success', 'Task status updated successfully.');
     }

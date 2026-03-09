@@ -57,6 +57,7 @@ const smtpForm = useForm({
 });
 
 const showPassword = ref(false);
+const passwordAlreadySaved = computed(() => !!props.smtp.password_saved);
 
 const submitSmtp = () => {
     smtpForm.post(route('organization.smtp.update'), { preserveScroll: true });
@@ -258,7 +259,7 @@ const tabs = [
                             <input
                                 v-model="smtpForm.password"
                                 :type="showPassword ? 'text' : 'password'"
-                                placeholder="Leave blank to keep existing password"
+                                :placeholder="passwordAlreadySaved ? '••••••••  (password saved — enter new to change)' : 'Enter SMTP password'"
                                 class="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition placeholder-gray-400"
                             />
                             <button type="button" @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
@@ -271,7 +272,10 @@ const tabs = [
                                 </svg>
                             </button>
                         </div>
-                        <p class="mt-1 text-xs text-gray-400">Leave blank to keep the existing password unchanged.</p>
+                        <p class="mt-1 text-xs text-gray-400">
+                            <span v-if="passwordAlreadySaved">A password is currently saved. Leave blank to keep it unchanged.</span>
+                            <span v-else>Enter your SMTP password.</span>
+                        </p>
                         <p v-if="smtpForm.errors.password" class="mt-1 text-xs text-red-500">{{ smtpForm.errors.password }}</p>
                     </div>
 
