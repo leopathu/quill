@@ -7,62 +7,64 @@ use App\Models\Task;
 use App\Models\Project;
 use App\Models\TaskComment;
 use App\Models\User;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Mail\Message;
+use Illuminate\Mail\Mailer;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 
 class EmailNotificationService
 {
     /**
-     * Build a Swift mailer configuration from the organization's SMTP settings.
-     * Returns true if org SMTP is configured, false to fall back to .env defaults.
+     * Build a fresh Illuminate Mailer using the org's SMTP settings.
+     * Returns null if settings are incomplete.
      */
-    private function configureSmtp(Organization $org): bool
+    private function buildMailer(Organization $org): ?Mailer
     {
         $settings = $org->settings ?? [];
 
-        $host = $settings['smtp_host'] ?? '';
-        $port = $settings['smtp_port'] ?? '';
+        $host     = $settings['smtp_host']     ?? '';
+        $port     = $settings['smtp_port']     ?? '';
         $username = $settings['smtp_username'] ?? '';
         $password = $settings['smtp_password'] ?? '';
 
         if (empty($host) || empty($port) || empty($username) || empty($password)) {
-            return false;
+            return null;
         }
 
-        $encryption = $settings['smtp_encryption'] ?? 'tls';
+        $encryption  = $settings['smtp_encryption']   ?? 'tls';
         $fromAddress = $settings['smtp_from_address'] ?? $username;
-        $fromName = $settings['smtp_from_name'] ?? ($org->name ?? config('app.name'));
+        $fromName    = $settings['smtp_from_name']    ?? ($org->name ?? config('app.name'));
 
-        config([
-            'mail.mailers.smtp.host'       => $host,
-            'mail.mailers.smtp.port'       => (int) $port,
-            'mail.mailers.smtp.username'   => $username,
-            'mail.mailers.smtp.password'   => $password,
-            'mail.mailers.smtp.encryption' => $encryption === 'none' ? null : $encryption,
-            'mail.from.address'            => $fromAddress,
-            'mail.from.name'               => $fromName,
-        ]);
+        $transport = new EsmtpTransport(
+            $host,
+            (int) $port,
+            $encryption === 'ssl'
+        );
+        $transport->setUsername($username);
+        $transport->setPassword($password);
 
-        return true;
+        $mailer = new Mailer('smtp', app('view'), $transport, app('events'));
+        $mailer->alwaysFrom($fromAddress, $fromName);
+
+        return $mailer;
     }
 
     /**
-     * Core send method. Silently fails if SMTP is not configured.
+     * Core send method. Silently fails if SMTP is not configured or send fails.
      */
     public function send(Organization $org, string $to, string $toName, string $subject, string $view, array $data): void
     {
         try {
-            $configured = $this->configureSmtp($org);
+            $mailer = $this->buildMailer($org);
 
-            if (!$configured) {
-                return; // No SMTP configured — skip silently
+            if (!$mailer) {
+                \Log::info('EmailNotificationService: SMTP not configured for org ' . $org->id . ', skipping.');
+                return;
             }
 
-            Mail::send($view, $data, function (Message $message) use ($to, $toName, $subject) {
+            $mailer->send($view, $data, function (Message $message) use ($to, $toName, $subject) {
                 $message->to($to, $toName)->subject($subject);
             });
         } catch (\Throwable $e) {
-            // Never break the app because of email failure
             \Log::warning('EmailNotificationService: failed to send email', [
                 'to'      => $to,
                 'subject' => $subject,
@@ -71,13 +73,6 @@ class EmailNotificationService
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Task Notifications
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Notify assignee when a task is created and assigned to them.
-     */
     public function taskAssigned(Task $task, Project $project, Organization $org): void
     {
         if (!$task->assignee_id || $task->assignee_id === $task->owner_id) {
@@ -104,14 +99,10 @@ class EmailNotificationService
         );
     }
 
-    /**
-     * Notify old assignee + new assignee when a task is reassigned.
-     */
     public function taskReassigned(Task $task, Project $project, Organization $org, ?int $previousAssigneeId): void
     {
         $actor = auth()->user();
 
-        // Notify new assignee (if changed and different from actor)
         if ($task->assignee_id && $task->assignee_id !== $previousAssigneeId) {
             $newAssignee = $task->assignee;
             if ($newAssignee && $newAssignee->id !== $actor->id) {
@@ -134,17 +125,12 @@ class EmailNotificationService
         }
     }
 
-    /**
-     * Notify task owner/creator when a task is marked Completed.
-     */
     public function taskCompleted(Task $task, Project $project, Organization $org): void
     {
         $owner = $task->owner;
         if (!$owner) return;
 
         $completedBy = auth()->user();
-
-        // Don't notify if owner completed their own task
         if ($owner->id === $completedBy->id) return;
 
         $this->send(
@@ -164,9 +150,6 @@ class EmailNotificationService
         );
     }
 
-    /**
-     * Notify status change to all relevant parties (assignee + owner) except the actor.
-     */
     public function taskStatusChanged(Task $task, Project $project, Organization $org, string $oldStatus, string $newStatus): void
     {
         if ($newStatus === 'Completed') {
@@ -174,10 +157,9 @@ class EmailNotificationService
             return;
         }
 
-        $actor = auth()->user();
+        $actor    = auth()->user();
         $notified = [$actor->id];
 
-        // Notify assignee
         if ($task->assignee_id && !in_array($task->assignee_id, $notified)) {
             $assignee = $task->assignee;
             if ($assignee) {
@@ -202,7 +184,6 @@ class EmailNotificationService
             }
         }
 
-        // Notify owner
         if ($task->owner_id && !in_array($task->owner_id, $notified)) {
             $owner = $task->owner;
             if ($owner) {
@@ -227,18 +208,10 @@ class EmailNotificationService
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Comment Notifications
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Notify task owner and assignee (but not the commenter) when a comment is added.
-     */
     public function commentAdded(TaskComment $comment, Task $task, Project $project, Organization $org): void
     {
         $commenter = auth()->user();
         $notified  = [$commenter->id];
-
         $recipients = [];
 
         // Notify task owner
@@ -253,7 +226,7 @@ class EmailNotificationService
             $recipients[] = $task->assignee;
         }
 
-        // If this is a reply, also notify the parent comment author
+        // Notify parent comment author (for replies)
         if ($comment->parent_id) {
             $parentAuthor = optional($comment->parent)->user;
             if ($parentAuthor && !in_array($parentAuthor->id, $notified)) {
@@ -261,6 +234,31 @@ class EmailNotificationService
                 $recipients[] = $parentAuthor;
             }
         }
+
+        // Notify all other users who have previously commented on this task
+        $previousCommenters = TaskComment::where('task_id', $task->id)
+            ->where('id', '!=', $comment->id)
+            ->with('user')
+            ->get()
+            ->pluck('user')
+            ->filter()
+            ->unique('id');
+
+        foreach ($previousCommenters as $prevCommenter) {
+            if (!in_array($prevCommenter->id, $notified)) {
+                $notified[]   = $prevCommenter->id;
+                $recipients[] = $prevCommenter;
+            }
+        }
+
+        \Log::info('EmailNotificationService::commentAdded', [
+            'task_id'        => $task->id,
+            'commenter_id'   => $commenter->id,
+            'owner_id'       => $task->owner_id,
+            'assignee_id'    => $task->assignee_id,
+            'recipient_count' => count($recipients),
+            'recipients'     => collect($recipients)->pluck('email')->toArray(),
+        ]);
 
         foreach ($recipients as $recipient) {
             $this->send(
@@ -282,18 +280,10 @@ class EmailNotificationService
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Project Notifications
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Notify admin users when a new project is created (if they didn't create it).
-     */
     public function projectCreated(Project $project, Organization $org): void
     {
         $creator = auth()->user();
 
-        // Notify all admin users in the org (except the creator)
         $admins = User::where('organization_id', $org->id)
             ->whereHas('role', fn ($q) => $q->where('name', 'admin'))
             ->get();
@@ -318,17 +308,8 @@ class EmailNotificationService
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Team Notifications
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Notify a user when they are added to a project team.
-     */
     public function teamMemberAdded(User $addedUser, Project $project, Organization $org, string $role): void
     {
-        $addedBy = auth()->user();
-
         $this->send(
             $org,
             $addedUser->email,
@@ -338,7 +319,7 @@ class EmailNotificationService
             [
                 'addedUser' => $addedUser,
                 'project'   => $project,
-                'addedBy'   => $addedBy,
+                'addedBy'   => auth()->user(),
                 'role'      => ucfirst($role),
                 'appName'   => config('app.name'),
                 'appUrl'    => config('app.url'),
@@ -346,13 +327,8 @@ class EmailNotificationService
         );
     }
 
-    /**
-     * Notify a user when they are removed from a project team.
-     */
     public function teamMemberRemoved(User $removedUser, Project $project, Organization $org): void
     {
-        $removedBy = auth()->user();
-
         $this->send(
             $org,
             $removedUser->email,
@@ -362,26 +338,18 @@ class EmailNotificationService
             [
                 'removedUser' => $removedUser,
                 'project'     => $project,
-                'removedBy'   => $removedBy,
+                'removedBy'   => auth()->user(),
                 'appName'     => config('app.name'),
                 'appUrl'      => config('app.url'),
             ]
         );
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Document Notifications
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Notify all project team members when a new document is created.
-     */
     public function documentCreated(\App\Models\ProjectDocument $document, Project $project, Organization $org): void
     {
         $author  = auth()->user();
         $members = $project->team()->get();
 
-        // Also include project owner
         $owner = $project->owner;
         if ($owner && !$members->contains('id', $owner->id)) {
             $members->push($owner);
